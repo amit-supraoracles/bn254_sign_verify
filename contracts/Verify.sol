@@ -25,8 +25,8 @@ contract Verify {
         bool checkSuccess;
         (checkSuccess, callSuccess) = BLS.verifySingle(_signature, _publicKey, BLS.hashToPoint(domain, _message));
 
-        require(callSuccess, "PriceOracle: Precompile call failed");
-        require(checkSuccess, "PriceOracle: Invalid signature");
+        require(callSuccess, "Incorrect Publickey or Signature Points");
+        require(checkSuccess, "Incorrect Input Message");
 
         return true;
     }
