@@ -1,0 +1,18 @@
+{
+  "name": "decode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@moralisweb3/common-evm-utils": "^2.14.3",
+    "moralis": "^2.14.3",
+    "request": "^2.88.2",
+    "web3": "^1.8.2"
+  }
+}
