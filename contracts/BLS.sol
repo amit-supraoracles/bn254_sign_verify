@@ -3,12 +3,12 @@ pragma solidity ^0.8.7;
 
 import { ModexpInverse, ModexpSqrt } from "./ModExp.sol";
 import {
-    BNPairingPrecompileCostEstimator
+BNPairingPrecompileCostEstimator
 } from "./BNPairingPrecompileCostEstimator.sol";
 
 
 library BLS {
-    
+
     uint256 private constant N = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
     uint256 private constant N_G2_X1 = 11559732032986387107991004021392285783925812861821192530917403151452391805634;
     uint256 private constant N_G2_X0 = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
@@ -18,49 +18,48 @@ library BLS {
     uint256 private constant Z1 = 0x000000000000000059e26bcea0d48bacd4f263f1acdb5c4f5763473177fffffe;
     uint256 private constant T24 = 0x1000000000000000000000000000000000000000000000000;
     uint256 private constant MASK24 = 0xffffffffffffffffffffffffffffffffffffffffffffffff;
-    
+
     address private constant COST_ESTIMATOR_ADDRESS =
-        0x079d8077C465BD0BF0FC502aD2B846757e415661;
+    0x079d8077C465BD0BF0FC502aD2B846757e415661;
 
     function verifySingle(
         uint256[2] memory signature,
         uint256[4] memory pubkey,
-        uint256[2] memory message
+        uint256[2] memory message,
+        uint256 precompileGasCost
     ) internal view returns (bool, bool) {
         uint256[12] memory input =
-            [
-                signature[0],
-                signature[1],
-                N_G2_X1,
-                N_G2_X0,
-                N_G2_Y1,
-                N_G2_Y0,
-                message[0],
-                message[1],
-                pubkey[1],
-                pubkey[0],
-                pubkey[3],
-                pubkey[2]
-            ];
+        [
+        signature[0],
+        signature[1],
+        N_G2_X1,
+        N_G2_X0,
+        N_G2_Y1,
+        N_G2_Y0,
+        message[0],
+        message[1],
+        pubkey[1],
+        pubkey[0],
+        pubkey[3],
+        pubkey[2]
+        ];
         uint256[1] memory out;
-        
-        uint256 precompileGasCost = 113133000;
-        
+
         // uint256 precompileGasCost =
         //     BNPairingPrecompileCostEstimator(COST_ESTIMATOR_ADDRESS).getGasCost(
         //         2
         //     );
-        
+
         bool callSuccess;
         // solium-disable-next-line security/no-inline-assembly
         assembly {
             callSuccess := staticcall(
-                precompileGasCost,
-                8,
-                input,
-                384,
-                out,
-                0x20
+            precompileGasCost,
+            8,
+            input,
+            384,
+            out,
+            0x20
             )
         }
         if (!callSuccess) {
@@ -101,12 +100,12 @@ library BLS {
         uint256 precompileGasCost = BNPairingPrecompileCostEstimator(COST_ESTIMATOR_ADDRESS).getGasCost(size + 1);
         assembly {
             callSuccess := staticcall(
-                precompileGasCost,
-                8,
-                add(input, 0x20),
-                mul(inputSize, 0x20),
-                out,
-                0x20
+            precompileGasCost,
+            8,
+            add(input, 0x20),
+            mul(inputSize, 0x20),
+            out,
+            0x20
             )
         }
         if (!callSuccess) {
@@ -116,9 +115,9 @@ library BLS {
     }
 
     function hashToPoint(bytes32 domain, bytes memory message)
-        internal
-        view
-        returns (uint256[2] memory)
+    internal
+    view
+    returns (uint256[2] memory)
     {
         uint256[2] memory u = hashToField(domain, message);
         uint256[2] memory p0 = mapToPoint(u[0]);
@@ -133,18 +132,18 @@ library BLS {
         assembly {
             success := staticcall(sub(gas(), 2000), 6, bnAddInput, 128, p0, 64)
             switch success
-                case 0 {
-                    invalid()
-                }
+            case 0 {
+                invalid()
+            }
         }
         require(success, "BLS: bn add call failed");
         return p0;
     }
 
     function mapToPoint(uint256 _x)
-        internal
-        pure
-        returns (uint256[2] memory p)
+    internal
+    pure
+    returns (uint256[2] memory p)
     {
         require(_x < N, "mapToPointFT: invalid field element");
         uint256 x = _x;
@@ -208,9 +207,9 @@ library BLS {
     }
 
     function isValidSignature(uint256[2] memory signature)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         if ((signature[0] >= N) || (signature[1] >= N)) {
             return false;
@@ -220,9 +219,9 @@ library BLS {
     }
 
     function isOnCurveG1(uint256[2] memory point)
-        internal
-        pure
-        returns (bool _isOnCurve)
+    internal
+    pure
+    returns (bool _isOnCurve)
     {
 
         assembly {
@@ -237,40 +236,40 @@ library BLS {
     }
 
     function isOnCurveG2(uint256[4] memory point)
-        internal
-        pure
-        returns (bool _isOnCurve)
+    internal
+    pure
+    returns (bool _isOnCurve)
     {
         assembly {
-            // x0, x1
+        // x0, x1
             let t0 := mload(point)
             let t1 := mload(add(point, 32))
-            // x0 ^ 2
+        // x0 ^ 2
             let t2 := mulmod(t0, t0, N)
-            // x1 ^ 2
+        // x1 ^ 2
             let t3 := mulmod(t1, t1, N)
-            // 3 * x0 ^ 2
+        // 3 * x0 ^ 2
             let t4 := add(add(t2, t2), t2)
-            // 3 * x1 ^ 2
+        // 3 * x1 ^ 2
             let t5 := addmod(add(t3, t3), t3, N)
-            // x0 * (x0 ^ 2 - 3 * x1 ^ 2)
+        // x0 * (x0 ^ 2 - 3 * x1 ^ 2)
             t2 := mulmod(add(t2, sub(N, t5)), t0, N)
-            // x1 * (3 * x0 ^ 2 - x1 ^ 2)
+        // x1 * (3 * x0 ^ 2 - x1 ^ 2)
             t3 := mulmod(add(t4, sub(N, t3)), t1, N)
 
-            // x ^ 3 + b
+        // x ^ 3 + b
             t0 := addmod(
-                t2,
-                0x2b149d40ceb8aaae81be18991be06ac3b5b4c5e559dbefa33267e6dc24a138e5,
-                N
+            t2,
+            0x2b149d40ceb8aaae81be18991be06ac3b5b4c5e559dbefa33267e6dc24a138e5,
+            N
             )
             t1 := addmod(
-                t3,
-                0x009713b03af0fed4cd2cafadeed8fdf4a74fa084e52d1852e4a2bd0685c315d2,
-                N
+            t3,
+            0x009713b03af0fed4cd2cafadeed8fdf4a74fa084e52d1852e4a2bd0685c315d2,
+            N
             )
 
-            // y0, y1
+        // y0, y1
             t2 := mload(add(point, 64))
             t3 := mload(add(point, 96))
 
@@ -292,9 +291,9 @@ library BLS {
     }
 
     function hashToField(bytes32 domain, bytes memory messages)
-        internal
-        pure
-        returns (uint256[2] memory)
+    internal
+    pure
+    returns (uint256[2] memory)
     {
         bytes memory _msg = expandMsgTo96(domain, messages);
         uint256 u0;
@@ -317,9 +316,9 @@ library BLS {
     }
 
     function expandMsgTo96(bytes32 domain, bytes memory message)
-        internal
-        pure
-        returns (bytes memory)
+    internal
+    pure
+    returns (bytes memory)
     {
 
         uint256 t0 = message.length;
