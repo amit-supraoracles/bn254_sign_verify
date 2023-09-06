@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.4;
 
 import "./BLS.sol";
 
 contract Verify {
     bytes32 domain;
-    uint256[4] publicKey; 
-    uint256[2] signature;   
+    uint256[4] publicKey;
+    uint256[2] signature;
+    uint64 gasCost;
 
-    constructor() {
+    constructor(uint64 gas_cost) {
         domain = 0x0000000000000000000000000000000000000000000000000000000000000020;
         publicKey[0] =  1877680754511875309899085821046020641041516699522550968201931210511122361188;
         publicKey[1] =  1879687745237862349771417085220368195630510774060410176566704734657946401647;
@@ -17,17 +18,16 @@ contract Verify {
 
         signature[0] = 3789870118542016974105699138161781008918636358438246688710078193373583696417;
         signature[1] = 20766815278548398344257910495536643911108480586016736348038320126600861929561;
+        gasCost = gas_cost;
     }
 
-    function verify() public view returns (bool) {
+    function verify_bls() public view returns (bool) {
         bytes32 message = 0x321580d53f250a51ed527f5f7856bdd2ecbbf19f722ee6acc1804f63462375f3;
         bool callSuccess;
         bool checkSuccess;
-        (checkSuccess, callSuccess) = BLS.verifySingle(signature, publicKey, BLS.hashToPoint(domain, abi.encode(message)));
+        (checkSuccess, callSuccess) = BLS.verifySingle(signature, publicKey, BLS.hashToPoint(domain, abi.encode(message)), gasCost);
         require(callSuccess, "Incorrect Publickey or Signature Points");
         require(checkSuccess, "Incorrect Input Message");
         return true;
     }
 }
-
-
